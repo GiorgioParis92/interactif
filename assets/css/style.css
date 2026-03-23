@@ -67,7 +67,7 @@ nav {
   transition: transform 0.4s var(--ease);
 }
 nav.hidden { transform: translateY(-100%); }
-.nav-logo { display: flex; align-items: center; cursor: none; }
+.nav-logo { display: flex; align-items: center; cursor: none;     max-width: 4%;}
 .nav-logo img { height: 36px; width: auto; display: block; }
 .nav-logo span { color: var(--coral); font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
 .nav-logo span { color: var(--coral); }
