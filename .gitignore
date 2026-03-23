@@ -1,0 +1,16 @@
+# Médias uploadés (gérés directement sur le serveur)
+assets/images/*
+assets/videos/*
+!assets/images/.gitkeep
+!assets/videos/.gitkeep
+
+# Credentials (contient les mots de passe DB)
+includes/connexion.php
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.cursor/
+*.swp
+*.swo
