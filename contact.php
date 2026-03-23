@@ -1,5 +1,7 @@
 <?php
 require_once 'includes/db.php';
+require_once __DIR__ . '/includes/contact_mail.php';
+
 $current_page = 'contact';
 $page_title   = 'Contact — MIA';
 
@@ -17,8 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if (!$prenom || !$nom || !filter_var($email, FILTER_VALIDATE_EMAIL) || !$marque || !$besoin || !$message) {
     $flash = ['type' => 'error', 'msg' => 'Merci de remplir tous les champs correctement.'];
   } else {
-    $to      = $MIA['site']['email'];
-    $subject = '=?UTF-8?B?' . base64_encode("Nouveau brief de $prenom $nom — $marque") . '?=';
+    $to           = trim($MIA['site']['email'] ?? '');
+    $subjectPlain = "Nouveau brief de $prenom $nom — $marque";
+    $subjectMime  = '=?UTF-8?B?' . base64_encode($subjectPlain) . '?=';
 
     $body  = "Prénom : $prenom\r\n";
     $body .= "Nom : $nom\r\n";
@@ -27,18 +30,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $body .= "Besoin : $besoin\r\n\r\n";
     $body .= "Message :\r\n$message";
 
-    $headers  = "From: $to\r\n";
-    $headers .= "Reply-To: $email\r\n";
-    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
-    $headers .= "X-Mailer: PHP/" . phpversion();
-
-    $sent = $is_local ? true : mail($to, $subject, $body, $headers);
-
-    if ($sent) {
-      $flash = ['type' => 'success', 'msg' => 'Message envoyé ✓ Nous vous répondons sous 24h.'];
+    if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+      $flash = ['type' => 'error', 'msg' => 'Email de destination du site non configuré.'];
+    } elseif ($is_local) {
+      $flash = ['type' => 'success', 'msg' => 'Message envoyé ✓ (mode local — aucun mail réel).'];
       $_POST = [];
     } else {
-      $flash = ['type' => 'error', 'msg' => "Erreur lors de l'envoi. Réessayez ou écrivez-nous directement à $to."];
+      $sent = mia_contact_send_mail($to, $email, $subjectMime, $subjectPlain, $body);
+
+      if ($sent) {
+        $flash = ['type' => 'success', 'msg' => 'Message envoyé ✓ Nous vous répondons sous 24h.'];
+        $_POST = [];
+      } else {
+        $hint = is_readable(__DIR__ . '/includes/contact_smtp_config.php')
+          ? ''
+          : ' Si le problème continue, configure includes/contact_smtp_config.php (voir contact_smtp_config.example.php).';
+        $flash = ['type' => 'error', 'msg' => "Erreur lors de l'envoi. Réessayez ou écrivez-nous directement à $to.$hint"];
+      }
     }
   }
 }
